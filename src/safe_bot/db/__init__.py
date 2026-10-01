@@ -1,0 +1,1 @@
+"""SQLite ulanishi va repositorylar."""
