@@ -17,6 +17,7 @@ class RecordingSession(BaseSession):
     def __init__(self) -> None:
         super().__init__()
         self.messages: list[str] = []
+        self.markups: list[object] = []
 
     async def close(self) -> None:
         return None
@@ -29,6 +30,7 @@ class RecordingSession(BaseSession):
     ) -> TelegramType:
         if isinstance(method, SendMessage):
             self.messages.append(method.text or "")
+            self.markups.append(method.reply_markup)
         return True  # type: ignore[return-value]
 
     async def stream_content(
@@ -77,7 +79,18 @@ async def test_start_command_greets_and_stores_user(
 
     await dispatcher.feed_update(bot, update)
 
-    assert session.messages == ["Salom, Dilshod!"]
+    assert len(session.messages) == 1
+    assert session.messages[0].startswith("Salom, Dilshod!")
+    assert "Shu botni tanlang" in session.messages[0]
+    assert "Barcha shaxsiy chatlar" in session.messages[0]
+    assert "o'chirish" in session.messages[0]
+    assert "Business Mode" in session.messages[0]
+    markup = session.markups[0]
+    button = markup.inline_keyboard[0][0]
+    assert button.text
+    assert button.url == "tg://settings/business"
+    assert len(markup.inline_keyboard) == 1
+    assert len(markup.inline_keyboard[0]) == 1
     saved = await users.get(15)
     assert saved is not None
     assert saved.is_bot is False
