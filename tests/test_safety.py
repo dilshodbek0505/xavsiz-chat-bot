@@ -80,12 +80,34 @@ async def test_rule_deletes_dangerous_url(url: str, code: str) -> None:
     assert checker.urls == []
 
 
-async def test_ordinary_link_is_allowed_without_external_checker() -> None:
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://example.com/news",
+        "google.com",
+        "www.youtube.com/watch?v=abc",
+        "t.me/durov",
+        "//example.com/path",
+        "tg://resolve?domain=durov",
+        "mailto:user@example.com",
+        "https://example.com/readme.com",
+    ],
+)
+async def test_ordinary_links_are_allowed(url: str) -> None:
     gate = SafetyGate(Blocklist.parse(""))
 
-    decision = await gate.evaluate(Submission(urls=("https://example.com/news",)))
+    decision = await gate.evaluate(Submission(urls=(url,)))
 
     assert not decision.delete
+
+
+async def test_schemeless_blocked_domain_is_still_deleted() -> None:
+    gate = SafetyGate(Blocklist.parse("phishing.test"))
+
+    decision = await gate.evaluate(Submission(urls=("phishing.test/login",)))
+
+    assert decision.delete
+    assert "blocked_domain" in codes(decision)
 
 
 async def test_pdf_is_allowed() -> None:

@@ -3,6 +3,7 @@ from urllib.parse import unquote, urlsplit
 
 from safe_bot.safety.blocklist import Blocklist
 from safe_bot.safety.models import Reason, Submission
+from safe_bot.safety.urls import canonical_url
 
 APP_EXTENSIONS = frozenset(
     {
@@ -15,7 +16,6 @@ APP_EXTENSIONS = frozenset(
         "msi",
         "bat",
         "cmd",
-        "com",
         "scr",
         "dll",
         "dex",
@@ -39,6 +39,9 @@ APP_MIME_TYPES = frozenset(
 )
 
 _SAFE_SCHEMES = frozenset({"http", "https"})
+_DANGEROUS_SCHEMES = frozenset(
+    {"javascript", "data", "file", "intent", "vbscript", "content"}
+)
 
 
 def is_app_file(submission: Submission) -> bool:
@@ -67,10 +70,15 @@ def rule_reasons(submission: Submission, blocklist: Blocklist) -> tuple[Reason, 
 
 
 def url_reasons(url: str, blocklist: Blocklist) -> tuple[Reason, ...]:
-    parts = urlsplit(url.strip())
+    normalized = canonical_url(url)
+    if normalized is None:
+        return ()
+    parts = urlsplit(normalized)
     scheme = parts.scheme.lower()
+    if scheme in _DANGEROUS_SCHEMES:
+        return (Reason("unsafe_scheme", scheme),)
     if scheme not in _SAFE_SCHEMES:
-        return (Reason("unsafe_scheme", scheme or "noma'lum"),)
+        return ()
 
     reasons: list[Reason] = []
     if parts.username or parts.password:

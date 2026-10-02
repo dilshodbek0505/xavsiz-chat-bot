@@ -3,6 +3,7 @@ from urllib.parse import urlsplit
 
 from safe_bot.safety.models import Decision
 from safe_bot.safety.notice import reason_line
+from safe_bot.safety.urls import canonical_url
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,7 +47,10 @@ def hosts_from_urls(urls: tuple[str, ...]) -> tuple[str, ...]:
     hosts: list[str] = []
     seen: set[str] = set()
     for url in urls:
-        host = urlsplit(url).hostname
+        prepared = canonical_url(url)
+        if prepared is None:
+            continue
+        host = urlsplit(prepared).hostname
         if not host:
             continue
         normalized = host.lower().removeprefix("www.")
