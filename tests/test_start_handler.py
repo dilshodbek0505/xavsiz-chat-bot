@@ -88,7 +88,7 @@ async def test_start_command_greets_and_stores_user(
     markup = session.markups[0]
     button = markup.inline_keyboard[0][0]
     assert button.text
-    assert button.url == "tg://settings/business"
+    assert button.url == "tg://settings/business/bots"
     assert len(markup.inline_keyboard) == 1
     assert len(markup.inline_keyboard[0]) == 1
     saved = await users.get(15)

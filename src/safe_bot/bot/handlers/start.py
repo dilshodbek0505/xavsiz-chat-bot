@@ -7,7 +7,7 @@ from safe_bot.db.repositories.users import UserRepository
 from safe_bot.services.greeting import build_greeting
 from safe_bot.services.start import register_and_greet
 
-BUSINESS_SETTINGS_URL = "tg://settings/business"
+BUSINESS_SETTINGS_URL = "tg://settings/business/bots"
 
 _STEPS = (
     "Chatlaringizni kuzatish uchun tugmani bosing. Sozlama ochilganda:\n"
@@ -27,7 +27,7 @@ def business_settings_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Business sozlamasini ochish",
+                    text="Chat automationni ochish",
                     url=BUSINESS_SETTINGS_URL,
                 )
             ]
