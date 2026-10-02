@@ -1,0 +1,6 @@
+# Har qatorga domen yoki sha256 yozing. # bilan boshlangan qatorlar e'tiborga olinmaydi.
+# Domen yozilsa, uning subdomenlari ham bloklanadi.
+#
+# phishing.example
+# https://evil.example/path
+# sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef

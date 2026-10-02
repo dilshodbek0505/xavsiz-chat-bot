@@ -9,6 +9,7 @@ from pydantic import SecretStr
 
 from safe_bot.bot.factory import create_bot, create_dispatcher
 from safe_bot.config import Settings
+from safe_bot.db.repositories.business_connections import BusinessConnectionRepository
 from safe_bot.db.repositories.users import UserRepository
 
 
@@ -41,12 +42,15 @@ class RecordingSession(BaseSession):
         yield b""
 
 
-async def test_start_command_greets_and_stores_user(users: UserRepository) -> None:
+async def test_start_command_greets_and_stores_user(
+    users: UserRepository,
+    connections: BusinessConnectionRepository,
+) -> None:
     settings = Settings(bot_token=SecretStr("123456:test"), _env_file=None)
     bot = create_bot(settings)
     session = RecordingSession()
     bot.session = session
-    dispatcher = create_dispatcher(users)
+    dispatcher = create_dispatcher(users, connections)
     update = Update.model_validate(
         {
             "update_id": 1,
@@ -58,7 +62,11 @@ async def test_start_command_greets_and_stores_user(users: UserRepository) -> No
                     "id": 15,
                     "is_bot": False,
                     "first_name": "Dilshod",
+                    "last_name": "Aka",
                     "username": "dilshod",
+                    "language_code": "uz",
+                    "is_premium": True,
+                    "added_to_attachment_menu": True,
                 },
                 "text": "/start",
                 "entities": [{"type": "bot_command", "offset": 0, "length": 6}],
@@ -72,6 +80,13 @@ async def test_start_command_greets_and_stores_user(users: UserRepository) -> No
     assert session.messages == ["Salom, Dilshod!"]
     saved = await users.get(15)
     assert saved is not None
+    assert saved.is_bot is False
     assert saved.first_name == "Dilshod"
+    assert saved.last_name == "Aka"
     assert saved.username == "dilshod"
+    assert saved.language_code == "uz"
+    assert saved.is_premium is True
+    assert saved.added_to_attachment_menu is True
+    assert saved.raw["id"] == 15
+    assert saved.raw["is_premium"] is True
     await bot.session.close()

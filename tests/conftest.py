@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from safe_bot.db.database import Database
+from safe_bot.db.repositories.business_connections import BusinessConnectionRepository
 from safe_bot.db.repositories.users import UserRepository
 
 
@@ -20,3 +21,8 @@ async def database(tmp_path: Path) -> AsyncIterator[Database]:
 @pytest.fixture
 def users(database: Database) -> UserRepository:
     return UserRepository(database)
+
+
+@pytest.fixture
+def connections(database: Database) -> BusinessConnectionRepository:
+    return BusinessConnectionRepository(database)

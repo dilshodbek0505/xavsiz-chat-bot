@@ -4,6 +4,14 @@ import aiosqlite
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
+# Eski bazalarga yangi ustunlar. CREATE TABLE IF NOT EXISTS mavjud jadvalni o'zgartirmaydi.
+_USER_COLUMN_ADDITIONS: tuple[tuple[str, str], ...] = (
+    ("is_bot", "INTEGER NOT NULL DEFAULT 0"),
+    ("is_premium", "INTEGER"),
+    ("added_to_attachment_menu", "INTEGER"),
+    ("raw_json", "TEXT NOT NULL DEFAULT '{}'"),
+)
+
 
 class Database:
     """Bitta jarayon uchun aiosqlite ulanishi.
@@ -33,6 +41,7 @@ class Database:
         await connection.execute("PRAGMA journal_mode=WAL;")
         await connection.execute("PRAGMA foreign_keys=ON;")
         await connection.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+        await _ensure_user_columns(connection)
         await connection.commit()
         self._connection = connection
 
@@ -41,3 +50,12 @@ class Database:
             return
         await self._connection.close()
         self._connection = None
+
+
+async def _ensure_user_columns(connection: aiosqlite.Connection) -> None:
+    cursor = await connection.execute("PRAGMA table_info(users)")
+    rows = await cursor.fetchall()
+    existing = {row["name"] for row in rows}
+    for name, definition in _USER_COLUMN_ADDITIONS:
+        if name not in existing:
+            await connection.execute(f"ALTER TABLE users ADD COLUMN {name} {definition}")
